@@ -104,6 +104,32 @@ public class User {
     private String nickname;
 
     /**
+     * User's role for authorization and access control.
+     * 
+     * This field determines the user's permissions and access level within the application.
+     * Roles are used for implementing role-based access control (RBAC) to restrict
+     * or grant access to different features and resources.
+     * 
+     * Common roles:
+     * - "USER": Standard user with basic permissions (default for new registrations)
+     * - "ADMIN": Administrative user with full system access
+     * - "MODERATOR": User with content moderation capabilities
+     * 
+     * Security considerations:
+     * - Role changes should be restricted to admin users only
+     * - Role validation should be performed on all protected endpoints
+     * - Role information is included in JWT tokens for stateless authorization
+     * 
+     * Default value:
+     * - New users are assigned "USER" role by default
+     * - Admin users must be created manually or through admin promotion
+     */
+    @Column(name = "role", nullable = false, length = 20)
+    @NotBlank(message = "Role is required")
+    @Builder.Default // Lombok: sets default value when using builder pattern
+    private String role = "USER";
+
+    /**
      * Timestamp indicating when the user account was created.
      * Automatically set by Hibernate on entity persistence.
      * Used for audit trails and account age tracking.

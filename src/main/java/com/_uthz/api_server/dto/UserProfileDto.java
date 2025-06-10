@@ -72,6 +72,30 @@ public class UserProfileDto {
     private String nickname;
 
     /**
+     * User's role for authorization and access control.
+     * 
+     * This field indicates the user's permission level within the application
+     * and is used for displaying role-specific UI elements and determining
+     * what actions the user can perform.
+     * 
+     * Common roles:
+     * - "USER": Standard user with basic permissions
+     * - "ADMIN": Administrative user with elevated privileges
+     * - "MODERATOR": User with content moderation capabilities
+     * 
+     * Usage in profiles:
+     * - Display user badges or indicators based on role
+     * - Show role-specific profile sections
+     * - Enable role-based UI elements
+     * - Provide role information for other users to see authority levels
+     * 
+     * Security note: Role information is safe to expose in profiles
+     * as it helps users understand authority levels and is used for
+     * client-side UI customization.
+     */
+    private String role;
+
+    /**
      * Timestamp indicating when the user account was created.
      * 
      * This information is useful for:

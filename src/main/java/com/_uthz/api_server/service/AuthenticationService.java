@@ -199,6 +199,7 @@ public class AuthenticationService {
                 .userId(user.getUserId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -301,7 +302,7 @@ public class AuthenticationService {
      * @return TokenResponseDto containing JWT tokens and metadata
      * 
      * Token characteristics:
-     * - Access token: Contains user claims, shorter lifespan, used for API authentication
+     * - Access token: Contains user claims including role, shorter lifespan, used for API authentication
      * - Refresh token: Minimal claims, longer lifespan, used only for token refresh
      * - Both tokens signed with the same secret key
      * - Tokens include appropriate type identifiers
@@ -313,13 +314,14 @@ public class AuthenticationService {
      * - Custom success message
      */
     private TokenResponseDto generateTokenResponse(User user, String message) {
-        log.debug("Generating JWT tokens for user ID: {}", user.getUserId());
+        log.debug("Generating JWT tokens for user ID: {} with role: {}", user.getUserId(), user.getRole());
 
-        // Generate JWT access token with user claims
+        // Generate JWT access token with user claims including role for authorization
         String accessToken = jwtUtil.generateAccessToken(
                 user.getUserId(),
                 user.getEmail(),
-                user.getNickname()
+                user.getNickname(),
+                user.getRole()
         );
 
         // Generate JWT refresh token with minimal claims

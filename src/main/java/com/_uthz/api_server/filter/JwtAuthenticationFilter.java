@@ -1,5 +1,6 @@
 package com._uthz.api_server.filter;
 
+import com._uthz.api_server.security.JwtUserDetails;
 import com._uthz.api_server.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * JWT Authentication Filter for processing Bearer token authentication.
@@ -182,7 +181,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 
      * This method validates the JWT token and creates a Spring Security
      * authentication object if the token is valid. It extracts user information
-     * from the token claims and sets up the security context.
+     * from the token claims and sets up the security context with the token
+     * stored for later access by UserContextService.
      * 
      * @param token The JWT token to authenticate with
      * @param request The HTTP request for authentication details
@@ -191,14 +191,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 1. Validate token signature and expiration
      * 2. Verify token type (must be access token)
      * 3. Extract user information from token claims
-     * 4. Create authentication object with user details
-     * 5. Set authentication in security context
+     * 4. Create authentication object with user details and token
+     * 5. Set authentication in security context for request-scoped access
      * 
      * Security validations:
      * - Token signature verification
      * - Token expiration check
      * - Token type validation (access vs refresh)
      * - User ID extraction and validation
+     * - Role extraction for authorization
      * 
      * Error scenarios:
      * - Invalid or expired tokens are rejected
@@ -224,6 +225,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long userId = jwtUtil.getUserIdFromToken(token);
             String email = jwtUtil.getEmailFromToken(token);
             String nickname = jwtUtil.getNicknameFromToken(token);
+            String role = jwtUtil.getRoleFromToken(token);
 
             // Validate that required user information is present
             if (userId == null || email == null) {
@@ -231,15 +233,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            log.debug("Authenticating user - ID: {}, Email: {}", userId, email);
+            log.debug("Authenticating user - ID: {}, Email: {}, Role: {}", userId, email, role);
 
-            // Create authentication object with user details
-            Authentication authentication = createAuthentication(userId, email, nickname, request);
+            // Create authentication object with user details and store the token
+            // The token is stored in credentials for access by UserContextService
+            Authentication authentication = createAuthenticationWithToken(userId, email, nickname, role, token, request);
 
             // Set authentication in security context for this request
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("Authentication successful for user ID: {}", userId);
+            log.debug("Authentication successful for user ID: {} with role: {}", userId, role);
 
         } catch (Exception e) {
             // Log authentication errors for security monitoring
@@ -251,60 +254,65 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Creates a Spring Security authentication object for the authenticated user.
+     * Creates a Spring Security authentication object for the authenticated user with JWT token.
      * 
-     * This method constructs an authentication object containing user information
-     * and authorities. It represents the authenticated user's identity and
-     * permissions within the Spring Security framework.
+     * This method constructs an authentication object containing user information,
+     * authorities, and the JWT token using a custom JwtUserDetails principal.
+     * It represents the authenticated user's identity and permissions within
+     * the Spring Security framework with enhanced JWT support.
      * 
      * @param userId The unique identifier of the authenticated user
      * @param email The user's email address (principal)
      * @param nickname The user's display nickname
+     * @param role The user's role for authorization
+     * @param token The JWT token for storage in credentials
      * @param request The HTTP request for authentication details
      * @return Authentication object representing the authenticated user
      * 
      * Authentication object components:
-     * - Principal: User email (used as username)
-     * - Credentials: null (token-based auth doesn't use credentials)
-     * - Authorities: User roles and permissions
+     * - Principal: JwtUserDetails with comprehensive user information
+     * - Credentials: JWT token (stored for UserContextService access)
+     * - Authorities: User roles and permissions from JwtUserDetails
      * - Details: Additional request-specific information
      * - Authenticated: true (since token validation passed)
      * 
-     * Authority assignment:
-     * - All authenticated users get ROLE_USER authority
-     * - Additional roles can be added based on business requirements
-     * - Roles are used for method-level security and authorization
+     * JwtUserDetails advantages:
+     * - Implements UserDetails interface for Spring Security compatibility
+     * - Contains all user information from JWT token claims
+     * - Provides role-based authority mapping with hierarchy
+     * - Offers convenience methods for role checking
+     * - Thread-safe and immutable user representation
      * 
      * Security considerations:
-     * - Principal is set to email for user identification
-     * - No credentials are stored (stateless authentication)
-     * - Authorities determine what the user can access
+     * - Principal contains complete user context from JWT
+     * - JWT token stored in credentials for UserContextService
+     * - Authorities automatically generated from user role
      * - Authentication details include request metadata
+     * - Role-based authority assignment with inheritance
      */
-    private Authentication createAuthentication(Long userId, String email, String nickname, HttpServletRequest request) {
-        // Create authorities list with basic user role
-        // Additional roles can be added here based on user permissions
-        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(USER_ROLE));
+    private Authentication createAuthenticationWithToken(Long userId, String email, String nickname, 
+                                                       String role, String token, HttpServletRequest request) {
+        // Create JwtUserDetails as principal with complete user information
+        // This provides a rich UserDetails implementation with JWT support
+        JwtUserDetails userDetails = JwtUserDetails.fromTokenClaims(userId, email, nickname, role, token);
 
-        // Create authentication token with user information
-        // Principal: email (used as username in Spring Security)
-        // Credentials: null (not needed for token-based authentication)
-        // Authorities: user roles and permissions
+        // Create authentication token with JwtUserDetails as principal
+        // Principal: JwtUserDetails with comprehensive user information
+        // Credentials: JWT token (stored for UserContextService access)
+        // Authorities: Automatically provided by JwtUserDetails.getAuthorities()
         UsernamePasswordAuthenticationToken authentication = 
-                new UsernamePasswordAuthenticationToken(email, null, authorities);
+                new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
 
         // Add request details for audit and security logging
         // This includes IP address, session ID, and other request metadata
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-        // Store additional user information as custom details if needed
-        // This can be accessed later in controllers or services
-        // Note: Custom details would require a custom Authentication implementation
-
-        log.debug("Created authentication object for user: {} with authorities: {}", email, authorities);
+        log.debug("Created authentication object for user: {} (ID: {}) with role: {} and authorities: {}", 
+                 email, userId, role, userDetails.getAuthorities());
 
         return authentication;
     }
+
 
     /**
      * Determines if this filter should process the current request.

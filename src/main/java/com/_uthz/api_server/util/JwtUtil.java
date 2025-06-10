@@ -96,12 +96,14 @@ public class JwtUtil {
      * @param userId The unique identifier of the user
      * @param email The user's email address (username)
      * @param nickname The user's display nickname
+     * @param role The user's role for authorization purposes
      * @return String containing the signed JWT access token
      * 
      * Token claims include:
      * - sub (subject): User ID for token identification
      * - email: User's email address
      * - nickname: User's display name
+     * - role: User's role for authorization
      * - iat (issued at): Token creation timestamp
      * - exp (expiration): Token expiry timestamp
      * - type: Token type identifier ("access")
@@ -111,13 +113,14 @@ public class JwtUtil {
      * - Used for authenticating protected API endpoints
      * - Should be refreshed before expiration using refresh token
      */
-    public String generateAccessToken(Long userId, String email, String nickname) {
+    public String generateAccessToken(Long userId, String email, String nickname, String role) {
         log.debug("Generating access token for user ID: {}", userId);
 
         // Create claims map with user information
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", email);
         claims.put("nickname", nickname);
+        claims.put("role", role);
         claims.put("type", "access"); // Token type identifier
 
         // Build and sign the JWT token
@@ -131,6 +134,21 @@ public class JwtUtil {
 
         log.debug("Access token generated successfully for user ID: {}", userId);
         return token;
+    }
+
+    /**
+     * Generates a JWT access token for authenticated user sessions (with default role).
+     * 
+     * This is an overloaded method that provides backward compatibility
+     * for existing code that doesn't specify a role. It defaults to "USER" role.
+     * 
+     * @param userId The unique identifier of the user
+     * @param email The user's email address (username)
+     * @param nickname The user's display nickname
+     * @return String containing the signed JWT access token with default "USER" role
+     */
+    public String generateAccessToken(Long userId, String email, String nickname) {
+        return generateAccessToken(userId, email, nickname, "USER");
     }
 
     /**
@@ -246,6 +264,34 @@ public class JwtUtil {
             return getClaimFromToken(token, claims -> claims.get("nickname", String.class));
         } catch (Exception e) {
             log.warn("Error extracting nickname from token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Extracts the role from a JWT token.
+     * 
+     * This method retrieves the user's role from the token claims.
+     * The role is stored as a custom claim in access tokens and is used
+     * for authorization and access control purposes.
+     * 
+     * @param token The JWT token to parse
+     * @return String containing the user's role, or null if not present
+     * 
+     * Common roles:
+     * - "USER": Standard user with basic permissions
+     * - "ADMIN": Administrative user with elevated privileges
+     * - "MODERATOR": User with content moderation capabilities
+     * 
+     * Note: Refresh tokens don't contain role claims, so this method
+     * will return null for refresh tokens. Role information is only
+     * included in access tokens for security purposes.
+     */
+    public String getRoleFromToken(String token) {
+        try {
+            return getClaimFromToken(token, claims -> claims.get("role", String.class));
+        } catch (Exception e) {
+            log.warn("Error extracting role from token: {}", e.getMessage());
             return null;
         }
     }
