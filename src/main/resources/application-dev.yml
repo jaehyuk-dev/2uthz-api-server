@@ -15,8 +15,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  profiles:
-    active: dev
 
 logging:
   level:
