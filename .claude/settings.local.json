@@ -4,7 +4,19 @@
       "Bash(ls:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(rm:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew bootRun:*)",
+      "Bash(timeout:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(./gradlew:*)",
+      "Bash(true)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }
