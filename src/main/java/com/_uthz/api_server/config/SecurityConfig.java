@@ -93,6 +93,11 @@ public class SecurityConfig {
                 // No authentication required for: login, register, email check, refresh
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/check-email", "/api/auth/refresh").permitAll()
                 
+                // Allow access to Swagger UI and OpenAPI documentation
+                // These endpoints provide API documentation and testing interface
+                // Public access enables developers to explore and test the API
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                
                 // Allow access to H2 database console for development
                 // TODO: Remove this in production environment for security
                 // H2 console should not be accessible in production deployments

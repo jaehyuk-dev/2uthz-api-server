@@ -1,5 +1,6 @@
 package com._uthz.api_server.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -31,6 +32,10 @@ import lombok.NoArgsConstructor;
 @Builder // Lombok: provides builder pattern for object creation
 @NoArgsConstructor // Lombok: generates default constructor for JSON deserialization
 @AllArgsConstructor // Lombok: generates constructor with all fields
+@Schema(
+    name = "RegisterRequest",
+    description = "Request payload for user registration containing email, password, and nickname"
+)
 public class RegisterRequestDto {
 
     /**
@@ -53,6 +58,13 @@ public class RegisterRequestDto {
      * - "user.name+tag@domain.co.uk"
      * - "123user@test-domain.org"
      */
+    @Schema(
+        description = "User's email address that will serve as the unique username for login",
+        example = "john.doe@example.com",
+        required = true,
+        maxLength = 100,
+        format = "email"
+    )
     @Email(message = "Email must be a valid email address")
     @NotBlank(message = "Email is required")
     @Size(max = 100, message = "Email must not exceed 100 characters")
@@ -82,6 +94,13 @@ public class RegisterRequestDto {
      * - At least one number
      * - At least one special character
      */
+    @Schema(
+        description = "User's password for account security (minimum 8 characters)",
+        example = "SecurePassword123!",
+        required = true,
+        minLength = 8,
+        format = "password"
+    )
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
@@ -115,6 +134,13 @@ public class RegisterRequestDto {
      * - "ThisNicknameIsWayTooLongForOurSystem" (too long)
      * - "" (empty)
      */
+    @Schema(
+        description = "User's display nickname for identification and personalization (2-30 characters)",
+        example = "JohnDoe",
+        required = true,
+        minLength = 2,
+        maxLength = 30
+    )
     @NotBlank(message = "Nickname is required")
     @Size(min = 2, max = 30, message = "Nickname must be between 2 and 30 characters")
     private String nickname;

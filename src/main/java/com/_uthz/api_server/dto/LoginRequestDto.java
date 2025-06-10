@@ -1,5 +1,6 @@
 package com._uthz.api_server.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -29,6 +30,10 @@ import lombok.NoArgsConstructor;
 @Builder // Lombok: provides builder pattern for object creation
 @NoArgsConstructor // Lombok: generates default constructor for JSON deserialization
 @AllArgsConstructor // Lombok: generates constructor with all fields
+@Schema(
+    name = "LoginRequest",
+    description = "Request payload for user authentication containing email and password credentials"
+)
 public class LoginRequestDto {
 
     /**
@@ -50,6 +55,12 @@ public class LoginRequestDto {
      * - "@example.com" (missing local part)
      * - "user@" (missing domain)
      */
+    @Schema(
+        description = "User's email address that serves as the unique username for authentication",
+        example = "john.doe@example.com",
+        required = true,
+        format = "email"
+    )
     @Email(message = "Email must be a valid email address")
     @NotBlank(message = "Email is required")
     private String email;
@@ -74,6 +85,13 @@ public class LoginRequestDto {
      * numbers, special characters) should be enforced at the service
      * layer based on business security requirements.
      */
+    @Schema(
+        description = "User's password for authentication (minimum 8 characters)",
+        example = "mySecurePassword123",
+        required = true,
+        minLength = 8,
+        format = "password"
+    )
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;

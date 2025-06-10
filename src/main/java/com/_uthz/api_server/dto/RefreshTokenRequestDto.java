@@ -1,5 +1,6 @@
 package com._uthz.api_server.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,10 @@ import lombok.NoArgsConstructor;
 @Builder // Lombok: provides builder pattern for object creation
 @NoArgsConstructor // Lombok: generates default constructor for JSON deserialization
 @AllArgsConstructor // Lombok: generates constructor with all fields
+@Schema(
+    name = "RefreshTokenRequest",
+    description = "Request payload containing refresh token for obtaining new access tokens"
+)
 public class RefreshTokenRequestDto {
 
     /**
@@ -66,6 +71,11 @@ public class RefreshTokenRequestDto {
      *   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
      * }
      */
+    @Schema(
+        description = "JWT refresh token obtained from login or previous refresh operations",
+        example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE2ODk3NjQ4MDAsImV4cCI6MTY5MDM2OTYwMH0.signature",
+        required = true
+    )
     @NotBlank(message = "Refresh token is required")
     private String refreshToken;
 }

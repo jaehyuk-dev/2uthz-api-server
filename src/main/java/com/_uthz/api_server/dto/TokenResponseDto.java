@@ -1,5 +1,6 @@
 package com._uthz.api_server.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,6 +39,10 @@ import java.time.LocalDateTime;
 @Builder // Lombok: provides builder pattern for object creation
 @NoArgsConstructor // Lombok: generates default constructor for JSON serialization
 @AllArgsConstructor // Lombok: generates constructor with all fields
+@Schema(
+    name = "TokenResponse",
+    description = "Response containing JWT access and refresh tokens with metadata"
+)
 public class TokenResponseDto {
 
     /**
@@ -59,6 +64,10 @@ public class TokenResponseDto {
      * - Refresh before expiration using refresh token
      * - Clear on logout or security events
      */
+    @Schema(
+        description = "JWT access token for API authentication (include in Authorization header as 'Bearer {token}')",
+        example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsIm5pY2tuYW1lIjoiSm9obiBEb2UiLCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNjg5NzY0ODAwLCJleHAiOjE2ODk4NTEyMDB9.signature"
+    )
     private String accessToken;
 
     /**
@@ -80,6 +89,10 @@ public class TokenResponseDto {
      * - Invalidated on logout or password change
      * - Monitor for unauthorized usage
      */
+    @Schema(
+        description = "JWT refresh token for obtaining new access tokens (use only with /api/auth/refresh endpoint)",
+        example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE2ODk3NjQ4MDAsImV4cCI6MTY5MDM2OTYwMH0.signature"
+    )
     private String refreshToken;
 
     /**
@@ -91,6 +104,10 @@ public class TokenResponseDto {
      * Standard value: "Bearer"
      * Usage: "Authorization: Bearer {accessToken}"
      */
+    @Schema(
+        description = "Token type for Authorization header formatting",
+        example = "Bearer"
+    )
     private String tokenType;
 
     /**
@@ -110,6 +127,10 @@ public class TokenResponseDto {
      * - Set up proactive refresh before expiration
      * - Handle token expiration gracefully in API calls
      */
+    @Schema(
+        description = "Access token expiration time in seconds from issuance",
+        example = "86400"
+    )
     private Long expiresIn;
 
     /**
